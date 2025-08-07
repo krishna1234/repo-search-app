@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import SearchBar from "./components/SearchBar";
 import RepositoryList from "./components/RepositoryList";
@@ -11,7 +11,10 @@ import EmptyState from "./components/EmptyState";
 import { searchRepositories } from "./utils/api";
 import { useDebounce } from "./utils/useDebounce";
 
-export default function Home() {
+// Force dynamic rendering to avoid prerendering issues with useSearchParams
+export const dynamic = "force-dynamic";
+
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -114,8 +117,7 @@ export default function Home() {
   const totalPages = results ? Math.ceil(results.total_count / 10) : 1;
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">GitHub Repository Search</h1>
+    <>
       <div className="mb-8">
         <SearchBar
           query={query}
@@ -146,6 +148,17 @@ export default function Home() {
           />
         </>
       )}
+    </>
+  );
+}
+
+export default function Home() {
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">GitHub Repository Search</h1>
+      <Suspense fallback={<LoadingSpinner />}>
+        <SearchContent />
+      </Suspense>
     </div>
   );
 }
